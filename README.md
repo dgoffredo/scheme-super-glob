@@ -6,7 +6,7 @@ Chicken Scheme module for extended path globbing
 
 Why
 ---
-I needed the equivalent of many shells' "brace expansion," e.g.
+I needed a near equivalent of many shells' "brace expansion," e.g.
 
     /some/path/with/{this,or-this}/and{/maybe-this,}
 
@@ -30,7 +30,7 @@ How
 Here's an example from the source:
 
     (define t "program")
-    (super-glob `((? "/opt") "/xy" ("data" "logs") (? ,t) ,(conc t ".log*")))
+    (super-glob `((? /opt) /xy (data logs) (? ,t) ,(conc t ".log*")))
 
 might return something like (depending on what's sitting on the file system):
 
@@ -42,7 +42,8 @@ might return something like (depending on what's sitting on the file system):
 More
 ----
 See the [source code](super-glob.scm).  In particular, it describes the (tiny)
-mini-language supported by `super-glob`.
+mini-language supported by `super-glob`.  It's a lot like brace expansion but
+doesn't support `{nesting{braces,inside},each,other}`.
 
 `super-glob` depends on the [clojurian][clojurian] egg.
 

@@ -12,6 +12,7 @@
   (use srfi-1            ; lists
        srfi-13           ; strings
        clojurian-syntax  ; ->>
+       data-structures   ; ->string
        matchable         ; pattern matching
        posix)            ; glob
   
@@ -51,14 +52,15 @@
     ; where 'components' is a list of path components, where each component is
     ; one of the following:
     ;
-    ; - a string, indicating a normal glob pattern, e.g. "foo*bar" or "snacks?"
-    ; - (list '? string), indicating zero or more of the string
-    ; - (list string ...), indicating exactly one of the listed strings.
+    ; - (list '? pattern), indicating zero or more of the pattern.
+    ; - (list pattern ...), indicating any one of the listed patterns.
+    ; - anything else is stringified and interpreted as a normal glob pattern,
+    ;   e.g. "foo*bar" or "snacks?"
     ;
     ; For example,
     ;
     ; (define t "program")
-    ; (super-glob `((? "/opt") "/xy" ("data" "logs") (? ,t) ,(conc t ".log*")))
+    ; (super-glob `((? /opt) /xy (data logs) (? ,t) ,(conc t ".log*")))
     ;
     ; might return
     ;
@@ -71,11 +73,15 @@
     ;
     ; {/opt,}/xy/{data,logs}{/program,}/program.log*
     ;
+    ; The patterns cannot be nested, so 'super-glob' is less powerful than
+    ; brace expansion.
+    ;
     (->> components
-         (map (match-lambda
+         (map (match-lambda                              ; parse mini-language
                 [('? optional) (list "" optional)]
                 [(options ...) options]
                 [other         (list other)]))
-         (apply cartesian-product)
-         (map (lambda (parts) (string-join parts "/")))
-         (apply glob*))))
+         (apply cartesian-product)                       ; expand combinations
+         (map (lambda (parts) (map ->string parts)))     ; stringify everything
+         (map (lambda (parts) (string-join parts "/")))  ; join parts into path
+         (apply glob*))))                                ; glob each pattern
